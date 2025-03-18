@@ -1,0 +1,144 @@
+library(bayestestR)
+library(brms)
+
+
+syrett_theme <- function() {
+  theme(
+    axis.text = element_text(colour = "black", family = "Arial", size = 12),
+    axis.title = element_text(colour = "black", family = "Arial", size = 12))
+} 
+
+## define color palette 
+cbPalette <- c("#999999", "#E69F00", "#56B4E9",
+               "#009E73", "#F0E442", "#0072B2", 
+               "#D55E00", "#CC79A7")
+
+
+listening = read.csv(here("data", "tidy", "listening_df.csv")) %>% 
+  rename("listening" = correct_total)
+
+reading = read.csv(here("data", "tidy", "reading_tidy.csv")) %>% 
+  rename("reading" = score)
+
+stroop = read.csv(here("data", "tidy", "stroop_tidy.csv"))
+
+wm_df = read.csv(here("data", "tidy", "wm_tidy.csv")) %>% 
+  rename("working_memory" = n)
+
+stroop_joined = stroop %>% 
+  left_join(reading, by = c("ppt", "group", "test")) %>% 
+  left_join(listening) %>% 
+  left_join(wm_df, by = c("ppt", "group", "test")) %>% 
+  mutate(model_factor = paste0(test,"_", group))
+
+
+reading_model = brms::brm(reading ~ test*group, family = "poisson", 
+                            data = stroop_joined, file = here("data", "models", "reading_mod.rds"))
+
+
+brms::conditional_effects(reading_model)
+
+
+
+listening_model = brms::brm(listening ~ test*group, family = "poisson", 
+                            data = stroop_joined, file = here("data", "models", "listening_mod.rds"))
+
+brms::conditional_effects(listening_model)
+
+wm_model = brms::brm(working_memory ~ test*group, family = "poisson", 
+                     data = stroop_joined, file = here("data", "models", "wm_mod.rds"))
+
+
+
+stroop_joined %>% 
+
+
+summary(m1 <- glm(listening ~ model_factor, family="poisson", data=stroop_joined))
+
+report::report(m1)
+
+
+summary(m1 <- glm(reading ~ model_factor, family="poisson", data=stroop_joined))
+
+summary(m1 <- glm(working_memory ~ model_factor, family="poisson", data=stroop_joined))
+
+summary(m1 <- glm(stroop_effect ~ model_factor, data=stroop_joined))
+
+p = summary(m1 <- glm(listening ~ model_factor, family="poisson", data=stroop_joined)) 
+  
+
+### WM and reading score 
+
+stroop_joined %>% 
+  ggplot(aes(y = listening, x = test, fill = group)) + geom_boxplot() + 
+  scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
+  ylab("Listening Score") + xlab("Test")
+
+stroop_joined %>% 
+  ggplot(aes(y = reading, x = test, fill = group)) + geom_boxplot() +
+  scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
+  ylab("Reading Score") + xlab("Test")
+
+stroop_joined %>% 
+  ggplot(aes(y = working_memory, x = test, fill = group)) + geom_boxplot() + 
+  scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
+  ylab("Working Memory Score") + xlab("Test")
+
+
+stroop_joined %>% 
+  ggplot(aes(y = stroop_effect, x = test, fill = group)) + geom_boxplot() + 
+  scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
+  ylab("Stroop Effect") + xlab("Test")
+
+
+
+
+stroop_joined %>% 
+  ggplot(aes(x = working_memory, y = listening)) + geom_point() + geom_smooth(method = "lm")
+
+
+stroop_joined %>% 
+  ggplot(aes(x = working_memory, y = reading)) + geom_point() + geom_smooth(method = "lm")
+
+
+brms::conditional_effects(wm_model)
+
+
+## WM model 
+describe_posterior(listening_model) %>% 
+  as_tibble() %>% 
+  select(-c("CI", "ROPE_CI", "ROPE_low", "ROPE_high")) %>% 
+  mutate(ESS = round(ESS)) %>% 
+  knitr::kable(format = "pandoc", digits = 2)
+
+conditional_effects(listening_model)[["test:group"]] %>% 
+  select(effect1__, effect2__, estimate__, lower__, upper__) %>% 
+  rename("Test_Time" = "effect1__") %>% 
+  rename("Group" = "effect2__") %>% 
+  mutate(estimate__ = round(estimate__, digits = 2)) %>% 
+  mutate(lower__ = round(lower__, digits = 2)) %>% 
+  mutate(upper__ = round(upper__, digits = 2)) %>% 
+  mutate(model_effect = paste0(estimate__, " [", lower__, " - ", upper__, "]")) %>% 
+  select(Test_Time, Group, model_effect) %>% 
+  pivot_wider(names_from = Test_Time, values_from = model_effect) %>% 
+  select(Group, pre, post) %>%  knitr::kable(format = "pandoc", digits = 2)
+
+
+## Reading Model 
+describe_posterior(wm_model) %>% 
+  as_tibble() %>% 
+  select(-c("CI", "ROPE_CI", "ROPE_low", "ROPE_high")) %>% 
+  mutate(ESS = round(ESS)) %>% 
+  knitr::kable(format = "pandoc", digits = 2) 
+
+conditional_effects(wm_model)[["test:group"]] %>% 
+  select(effect1__, effect2__, estimate__, lower__, upper__) %>% 
+  rename("Test_Time" = "effect1__") %>% 
+  rename("Group" = "effect2__") %>% 
+  mutate(estimate__ = round(estimate__, digits = 2)) %>% 
+  mutate(lower__ = round(lower__, digits = 2)) %>% 
+  mutate(upper__ = round(upper__, digits = 2)) %>% 
+  mutate(model_effect = paste0(estimate__, " [", lower__, " - ", upper__, "]")) %>% 
+  select(Test_Time, Group, model_effect) %>% 
+  pivot_wider(names_from = Test_Time, values_from = model_effect) %>% 
+  select(Group, pre, post) %>%  knitr::kable(format = "pandoc", digits = 2)

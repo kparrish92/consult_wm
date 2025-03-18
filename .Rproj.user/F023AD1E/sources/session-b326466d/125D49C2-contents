@@ -1,0 +1,133 @@
+---
+title: "tDCS Project"
+output: html_document
+date: "2025-03-18"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(here)
+library(bayestestR)
+library(bayesplot)
+library(brms)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+
+syrett_theme <- function() {
+  theme(
+    axis.text = element_text(colour = "black", family = "Arial", size = 12),
+    axis.title = element_text(colour = "black", family = "Arial", size = 12))
+} 
+
+## define color palette 
+cbPalette <- c("#999999", "#E69F00", "#56B4E9",
+               "#009E73", "#F0E442", "#0072B2", 
+               "#D55E00", "#CC79A7")
+
+
+listening = read.csv(here("data", "tidy", "listening_df.csv")) %>% 
+  rename("listening" = correct_total)
+
+reading = read.csv(here("data", "tidy", "reading_tidy.csv")) %>% 
+  rename("reading" = score)
+
+stroop = read.csv(here("data", "tidy", "stroop_tidy.csv"))
+
+wm_df = read.csv(here("data", "tidy", "wm_tidy.csv")) %>% 
+  rename("working_memory" = n)
+
+stroop_joined = stroop %>% 
+  left_join(reading, by = c("ppt", "group", "test")) %>% 
+  left_join(listening) %>% 
+  left_join(wm_df, by = c("ppt", "group", "test")) %>% 
+  mutate(model_factor = paste0(test,"_", group))
+
+```
+
+### RQ1: Does tDCS enhance listening and reading comprehension?
+
+It does for listening, but not reading.
+
+<details>
+  <summary>**Listening**</summary>
+
+```{r}
+stroop_joined %>% 
+  ggplot(aes(y = listening, x = test, fill = group)) + geom_boxplot() + 
+  scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
+  ylab("Listening Score") + xlab("Test")
+```
+
+```{r}
+summary(m1 <- glm(listening ~ model_factor, family="poisson", data=stroop_joined))[["coefficients"]] %>% 
+  as.data.frame() %>% knitr::kable(digits = 2)
+```
+
+`r report::report(m1)`
+</details> 
+
+<details>
+  <summary>**Reading**</summary>
+
+```{r}
+stroop_joined %>% 
+  ggplot(aes(y = reading, x = test, fill = group)) + geom_boxplot() + 
+  scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
+  ylab("Reading Score") + xlab("Test")
+```
+
+```{r}
+summary(m2 <- glm(reading ~ model_factor, family="poisson", data=stroop_joined))[["coefficients"]] %>% 
+  as.data.frame() %>% knitr::kable(digits = 2)
+```
+
+`r report::report(m2)`
+
+</details> 
+
+### RQ2: If so, is it because WM may also have increased?
+
+Working memory **did not** increase meaningfully for either group.
+
+<details>
+  <summary>**Working Memory**</summary>
+
+```{r}
+stroop_joined %>% 
+  ggplot(aes(y = working_memory, x = test, fill = group)) + geom_boxplot() + 
+  scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
+  ylab("Working Memory Score") + xlab("Test")
+```
+
+```{r}
+summary(m3 <- glm(working_memory ~ model_factor, family="poisson", data=stroop_joined))[["coefficients"]] %>% 
+  as.data.frame() %>% knitr::kable(digits = 2)
+```
+
+`r report::report(m3)`
+</details> 
+
+### RQ3: Does tDCS improve WM and inhibitory control?
+
+There is not evidence in improvement for the stroop effect either. 
+
+<details>
+  <summary>**Stroop Effect**</summary>
+
+```{r}
+stroop_joined %>% 
+  ggplot(aes(y = stroop_effect, x = test, fill = group)) + geom_boxplot() + 
+  scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
+  ylab("Stroop Effect") + xlab("Test")
+```
+
+```{r}
+summary(m4 <- glm(stroop_effect ~ model_factor, data=stroop_joined))[["coefficients"]] %>% 
+  as.data.frame() %>% knitr::kable(digits = 2)
+```
+
+`r report::report(m4)`
+
+</details> 
