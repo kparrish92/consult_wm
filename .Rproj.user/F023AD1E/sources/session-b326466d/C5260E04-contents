@@ -8,6 +8,19 @@ syrett_theme <- function() {
     axis.title = element_text(colour = "black", family = "Arial", size = 12))
 } 
 
+
+
+stroop_joined %>% 
+  ggplot(aes(x = reading, y = ppt, color = test)) + geom_point() +
+  facet_wrap(~group)
+
+
+
+stroop_joined %>% 
+  ggplot(aes(x = listening, y = ppt, color = test)) + geom_point() +
+  facet_wrap(~group)
+
+
 ## define color palette 
 cbPalette <- c("#999999", "#E69F00", "#56B4E9",
                "#009E73", "#F0E442", "#0072B2", 
@@ -50,7 +63,7 @@ wm_model = brms::brm(working_memory ~ test*group, family = "poisson",
 
 
 
-stroop_joined %>% 
+
 
 
 summary(m1 <- glm(listening ~ model_factor, family="poisson", data=stroop_joined))
@@ -142,3 +155,13 @@ conditional_effects(wm_model)[["test:group"]] %>%
   select(Test_Time, Group, model_effect) %>% 
   pivot_wider(names_from = Test_Time, values_from = model_effect) %>% 
   select(Group, pre, post) %>%  knitr::kable(format = "pandoc", digits = 2)
+
+
+plot(cooks.distance(m2))
+
+mean(cooks.distance(m2))*4
+
+cooks.distance(m2)[which.max(cooks.distance(m2))]
+
+plot(m2,which=4)
+
