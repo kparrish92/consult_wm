@@ -115,6 +115,8 @@ stroop_joined %>%
   ggplot(aes(y = listening, x = test, fill = group)) + geom_boxplot() + 
   scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
   ylab("Listening Score") + xlab("Test")
+
+ggsave(here("high_res", "stroop.png"), dpi = 600)
 ```
 
 ```{r}
@@ -182,6 +184,8 @@ stroop_joined %>%
   ggplot(aes(y = reading, x = test, fill = group)) + geom_boxplot() + 
   scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
   ylab("Reading Score") + xlab("Test")
+
+ggsave(here("high_res", "listening.png"), dpi = 600)
 ```
 
 
@@ -256,6 +260,9 @@ stroop_joined %>%
   ggplot(aes(y = working_memory, x = test, fill = group)) + geom_boxplot() + 
   scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
   ylab("Working Memory Score") + xlab("Test")
+
+ggsave(here("high_res", "working_memory.png"), dpi = 600)
+
 ```
 
 ```{r}
@@ -327,6 +334,9 @@ stroop_joined %>%
   ggplot(aes(y = stroop_effect, x = test, fill = group)) + geom_boxplot() + 
   scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
   ylab("Stroop Effect") + xlab("Test")
+
+ggsave(here("high_res", "stroop_effect.png"), dpi = 600)
+
 ```
 
 ```{r}
