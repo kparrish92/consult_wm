@@ -116,7 +116,7 @@ stroop_joined %>%
   scale_x_discrete(limits = c("pre", "post")) + theme_minimal() + syrett_theme() +
   ylab("Listening Score") + xlab("Test")
 
-ggsave(here("high_res", "stroop.png"), dpi = 600)
+ggsave(here("high_res", "listening_comprehension.png"), dpi = 600)
 ```
 
 ```{r}
